@@ -1,5 +1,23 @@
 # voicememo-back
 
+## セットアップ
+
+1. Git cloneする
+   1. git clone https://github.com/11mrhappy/voicememo-back.git
+2. 以下Firebase周り
+3. Firebaseへログインする
+   1. firebase login
+   2. 必要な認証情報を入力する
+4. Firebaseのプロジェクトを選ぶ
+   1. firebase init
+   2. `use an existing project`を選択し、`voicememo-3e665`を選択する
+5. (FirestoreとFunctionsは作成済みのため、もし作成しますか?みたいなフローがあったら無視してOK)
+6. 今回はハッカソンなので1つのファイル内にすべてのFunctionsを書く
+   - Firebase全体をデプロイ: firebase deploy
+   - 特定の関数をデプロイ: firebase deploy --only functions:FUNCTION_NAME
+   - functionのみをデプロイ: firebase deploy --only functions
+   - firestoreのruleのみをデプロイ: firebase deploy --only firestore:rules
+
 ## フロー
 
 1. アプリ: ホーム画面「リマインド設定画面」
