@@ -12,7 +12,7 @@
    1. firebase init
    2. `use an existing project`を選択し、`voicememo-3e665`を選択する
 5. (FirestoreとFunctionsは作成済みのため、もし作成しますか?みたいなフローがあったら無視してOK)
-6. 今回はハッカソンなので1つのファイル内にすべてのFunctionsを書く
+6. 今回はハッカソンなので1つのファイル内にすべてのFunctionsを書く(コンフリクトは発生しますが、お互いのFunctionに干渉しないので、かなり楽にコンフリクト解消できます)
    - Firebase全体をデプロイ: firebase deploy
    - 特定の関数をデプロイ: firebase deploy --only functions:FUNCTION_NAME
    - functionのみをデプロイ: firebase deploy --only functions
