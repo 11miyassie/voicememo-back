@@ -5,9 +5,9 @@ const admin = require('firebase-admin');
 const { namespace } = require("firebase-functions/v1/firestore");
 
 //chatGPT周り
-// const { Configuration, OpenAIApi } = require("openai");
-// const dotenv = require('dotenv');
-// dotenv.config();
+const { Configuration, OpenAIApi } = require("openai");
+const dotenv = require('dotenv');
+dotenv.config();
 
 admin.initializeApp();
 
