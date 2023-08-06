@@ -88,33 +88,36 @@ exports.sendPushNotification = functions.firestore
   .onCreate(async (snap, context) => {
     const reminderData = snap.data();
     const time = reminderData.time;
+    const task = reminderData.task;
 
     try {
-      sendDailyPushNotification = functions.pubsub
-      .schedule(`every day ${time}`)
-      .timeZone('Asia/Tokyo')
-      .onRun(async (context) => {
-        try {
-          const fcmToken = reminderData.fcm_token
-          // 通知を送信する処理
-          const payload = {
-            notification: {
-              title: 'リマインダー',
-              body: '毎朝8時のリマインダーです。',
-            },
-          };
+      const sendDailyPushNotification = functions.pubsub
+        .schedule(`every day ${time}`)
+        .timeZone('Asia/Tokyo')
+        .onRun(async (context) => {
+          try {
+            const fcmToken = reminderData.fcm_token;
+            // 通知を送信する処理
+            const payload = {
+              notification: {
+                title: 'リマインダー',
+                body: task,
+              },
+            };
 
-          // FCMトークンを使って全てのユーザーに通知を送信
-          const response = await admin.messaging().sendToDevice(fcmToken, payload);
-    
-          console.log('通知が送信されました。', response);
-          return null;
-        } catch (error) {
-          console.error('通知の送信中にエラーが発生しました。', error);
-          return null;
-        }
-      });
-      console.log('通知が送信されました。', response);
+            // FCMトークンを使って全てのユーザーに通知を送信
+            const response = await admin.messaging().sendToDevice(fcmToken, payload);
+      
+            console.log('通知が送信されました。', response);
+            return null;
+          } catch (error) {
+            console.error('通知の送信中にエラーが発生しました。', error);
+            return null;
+          }
+        });
+
+      // sendDailyPushNotificationをトリガーとして登録
+      await sendDailyPushNotification(context);
       return null;
     } catch (error) {
       console.error('通知の送信中にエラーが発生しました。', error);
