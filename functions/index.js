@@ -73,12 +73,8 @@ async function NLAnalysis(text){
 	
 	正解:
 	{
-		"reminders": [
-			{
-				"time": 08:00,
-				"task": "薬を飲む"
-			}
-		]
+        "time": 08:00,
+        "task": "薬を飲む"
 	}
 	
 	2
@@ -87,29 +83,8 @@ async function NLAnalysis(text){
 	
 	正解:
 	{
-		"reminders": [
-			{
-				"time": 17:00,
-				"task": "買い物に行く"
-			}
-		]
-	}
-	
-	3
-	A: 毎日朝の6時に散歩に行って、午後3時に買い物に行く。
-	
-	正解:
-	{
-		"reminders": [
-			{
-				"time": 06:00,
-				"task": "散歩に行く"
-			},
-			{
-				"time": 15:00,
-				"task"買い物に行く"
-			}
-		]
+        "time": 17:00,
+        "task": "買い物に行く"
 	}
 					`;
 
