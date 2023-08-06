@@ -5,35 +5,36 @@ const admin = require('firebase-admin');
 const { namespace } = require("firebase-functions/v1/firestore");
 
 //chatGPT周り
-// const { Configuration, OpenAIApi } = require("openai");
-// const dotenv = require('dotenv');
-// dotenv.config();
+const { Configuration, OpenAIApi } = require("openai");
+const dotenv = require('dotenv');
+dotenv.config();
 
 admin.initializeApp();
 
-exports.testFunction = functions.firestore.document('/user-inputs/{documentId}')
-  .onCreate(async (snap, context) => {
 
-  const audioData = snap.data();
-  const text = audioData.text;
-  const userId = audioData.user_id;
-  const timestamp = audioData.timestamp;
-
-  const result =
-	  {
-		  "date": "2021-10-01",
-		  "repeat": "3週間",
-		  "task": "この薬をこれから3週間毎日朝の8:00に飲んでください"
-	  };
-
-  await admin.firestore().collection('reminders').add(
-	{
-	  task: result["task"],
-	  date: result["date"],
-	  repeat: result["repeat"],
-	  user_id: userId
-	});
-});
+// exports.testFunction = functions.firestore.document('/user-inputs/{documentId}')
+//   .onCreate(async (snap, context) => {
+//
+//   const audioData = snap.data();
+//   const text = audioData.text;
+//   const userId = audioData.user_id;
+//   const timestamp = audioData.timestamp;
+//
+//   const result =
+// 	  {
+// 		  "date": "2021-10-01",
+// 		  "repeat": "3週間",
+// 		  "task": "この薬をこれから3週間毎日朝の8:00に飲んでください"
+// 	  };
+//
+//   await admin.firestore().collection('reminders').add(
+// 	{
+// 	  task: result["task"],
+// 	  date: result["date"],
+// 	  repeat: result["repeat"],
+// 	  user_id: userId
+// 	});
+// });
 
 //answerが新規作成されたら起動する、回答分析の関数
 exports.answerNLAnalysis = functions.firestore.document('/user-inputs/{documentId}')
@@ -41,19 +42,18 @@ exports.answerNLAnalysis = functions.firestore.document('/user-inputs/{documentI
 
   const audioData = snap.data();
   const text = audioData.text;
-  const userId = audioData.user_id;
-  const timestamp = audioData.timestamp;
+  const fcmToken = audioData.fcm_token;
+  // const timestamp = audioData.timestamp;
 
   let result = await NLAnalysis(text);
 
   //console.log("final:" + result);
   await admin.firestore().collection('reminders').add(
-    {
-      task: result["task"],
-      date: result["date"],
-      repeat: result["repeat"],
-	  user_id: userId
-    });
+      {
+          fcm_token: fcmToken,
+          task: result["task"],
+          time: result["time"]
+      });
 });
 
 async function NLAnalysis(text){
@@ -112,7 +112,8 @@ async function NLAnalysis(text){
 		]
 	}
 					`;
-	
+
+    const content = text;
 	const completion = await openai.createChatCompletion({
 		model: "gpt-3.5-turbo",
 		messages: [{"role": "system", "content": condition}, {role: "user", content: content}],
@@ -120,5 +121,44 @@ async function NLAnalysis(text){
 	//console.log(completion.data.choices[0].message.content);
 	//let result = JSON.parse(completion.data.choices[0].message.content)
 	//console.log(result["firstword"]);
-  return completion.data.choices[0].message.content;
+  return JSON.parse(completion.data.choices[0].message.content);
 }
+
+exports.sendPushNotification = functions.firestore
+  .document('reminders/{documentId}')
+  .onCreate(async (snap, context) => {
+    const reminderData = snap.data();
+    const time = reminderData.time;
+
+    try {
+      sendDailyPushNotification = functions.pubsub
+      .schedule(`every day ${time}`)
+      .timeZone('Asia/Tokyo')
+      .onRun(async (context) => {
+        try {
+          const fcmToken = reminderData.fcm_token
+          // 通知を送信する処理
+          const payload = {
+            notification: {
+              title: 'リマインダー',
+              body: '毎朝8時のリマインダーです。',
+            },
+          };
+
+          // FCMトークンを使って全てのユーザーに通知を送信
+          const response = await admin.messaging().sendToDevice(fcmToken, payload);
+    
+          console.log('通知が送信されました。', response);
+          return null;
+        } catch (error) {
+          console.error('通知の送信中にエラーが発生しました。', error);
+          return null;
+        }
+      });
+      console.log('通知が送信されました。', response);
+      return null;
+    } catch (error) {
+      console.error('通知の送信中にエラーが発生しました。', error);
+      return null;
+    }
+  });
