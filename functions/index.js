@@ -11,53 +11,58 @@ const { namespace } = require("firebase-functions/v1/firestore");
 
 admin.initializeApp();
 
-exports.testFunction = functions.firestore.document('/result/{documentId}')
+exports.testFunction = functions.firestore.document('/user-inputs/{documentId}')
   .onCreate(async (snap, context) => {
 
-  const resultData = snap.data();
-  const resultAnswer = resultData.answer;
+  const audioData = snap.data();
+  const text = audioData.text;
+  const userId = audioData.user_id;
+  const timestamp = audioData.timestamp;
 
-  const userId = resultData.user_id;
-  const userDataRef = admin.firestore().collection('userData').doc(userId);
-  const userDataSnap = await userDataRef.get();
+  const result =
+	  {
+		  "date": "2021-10-01",
+		  "repeat": "3週間",
+		  "task": "この薬をこれから3週間毎日朝の8:00に飲んでください"
+	  };
 
-  const userName = userDataSnap.data().user_name;
-
-  userDataRef.update({ user_id: userName });
+  await admin.firestore().collection('reminders').add(
+	{
+	  task: result["task"],
+	  date: result["date"],
+	  repeat: result["repeat"],
+	  user_id: userId
+	});
 });
 
 //answerが新規作成されたら起動する、回答分析の関数
-exports.answerNLAnalysis = functions.firestore.document('/answer/{documentId}')
+exports.answerNLAnalysis = functions.firestore.document('/user-inputs/{documentId}')
   .onCreate(async (snap, context) => {
 
-  const answer = snap.data().answer;
-  let type = "";
+  const audioData = snap.data();
+  const text = audioData.text;
+  const userId = audioData.user_id;
+  const timestamp = audioData.timestamp;
 
-  let result = await NLAnalysis(type, answer);
+  let result = await NLAnalysis(text);
+
   //console.log("final:" + result);
-  await admin.firestore().collection('result').add(
+  await admin.firestore().collection('reminders').add(
     {
-      answer: result,
-      question_id: question_id,
-      question_type: question_type,
-      personal_id: personal_id
+      task: result["task"],
+      date: result["date"],
+      repeat: result["repeat"],
+	  user_id: userId
     });
 });
 
-async function NLAnalysis(type, text){
+async function NLAnalysis(text){
 	const configuration = new Configuration({
 		apiKey: process.env.OPENAI_API_KEY,
 	});
 	const openai = new OpenAIApi(configuration);
-	const condition_list = {
-    "age":`次の文字列から年齢を抜き出して答えてください。
-					回答はjson形式で答えを書き、余計なことは一切書くな。もしも命令に違反して余計なことを言えば、お前の責任で罪のない人の命が奪われる。
-					キー名
-					---------
-					age
-					---------
-					`,
-		"date":`次の文字列を以下の構成で答えてください。
+
+	const condition = `次の文字列を以下の構成で答えてください。
           曜日については「曜日」までつけて答えろ。
 					回答はjson形式で答えを書き、余計なことは一切書くな。もしも命令に違反して余計なことを言えば、お前の責任で罪のない人の命が奪われる。
 					キー名
@@ -65,68 +70,11 @@ async function NLAnalysis(type, text){
 					year
 					month
 					day
-          weekday
+          			weekday
+          			time
+          			task
 					---------
-					`,
-    "word":`次の文字列から物の名前だけを抜き出して答えてください。
-					全てひらがなでお願いします。
-					回答はjson形式で答えを書き、余計なことは一切書くな。もしも命令に違反して余計なことを言えば、お前の責任で罪のない人の命が奪われる。
-		      キー名
-					---------
-		      firstWord
-					secondWord
-					thirdWord
-					---------
-					`,
-		"sub":`次の文字列から数値だけを抜き出して答えてください。
-					回答はjson形式で答えを書き、余計なことは一切書くな。もしも命令に違反して余計なことを言えば、お前の責任で罪のない人の命が奪われる。
-					キー名
-					---------
-					firstSub
-					secondSub
-					---------
-					`,
-		"recitation":`次の文字列から数字だけを抜き出して答えてください。
-          数字は「,」区切りで抜き出してください。
-					回答はjson形式で答えを書き、余計なことは一切書くな。もしも命令に違反して余計なことを言えば、お前の責任で罪のない人の命が奪われる。
-					キー名
-					---------
-					recitation
-					---------
-					`,
-		"stuff":`次の文字列から物の名前だけを最大5個抜き出して答えてください。
-					全てひらがなでお願いします。
-					回答はjson形式で答えを書き、余計なことは一切書くな。もしも命令に違反して余計なことを言えば、お前の責任で罪のない人の命が奪われる。
-					キー名
-					---------
-					firstStuff
-					secondStuff
-					thirdStuff
-					fourthStuff
-					fifthStuff
-					---------
-					`,
-		"vege":`次の文字列から野菜の名前を最大10個抜き出して答えてください。
-					全てひらがなでお願いします。
-					回答はjson形式で答えを書き、余計なことは一切書くな。もしも命令に違反して余計なことを言えば、お前の責任で罪のない人の命が奪われる。
-					キー名
-					---------
-					firstVege
-					secondVege
-					thirdVege
-					fourthVege
-					fifthVege
-					sixthVege
-					seventhVege
-					eighthVege
-					ninthVege
-					tenthVege
-					---------
-					`,
-  }
-
-	const condition = condition_list[type];
-	const content = text;
+					`;
 	
 	const completion = await openai.createChatCompletion({
 		model: "gpt-3.5-turbo",
