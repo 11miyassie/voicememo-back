@@ -90,10 +90,11 @@ exports.sendPushNotification = functions.firestore
   .document('reminders/{documentId}')
   .onCreate(async (snap, context) => {
     const reminderData = snap.data();
+    const time = reminderData.time;
 
     try {
       sendDailyPushNotification = functions.pubsub
-      .schedule('every day 08:00')
+      .schedule(`every day ${time}`)
       .timeZone('Asia/Tokyo')
       .onRun(async (context) => {
         try {
