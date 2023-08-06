@@ -85,3 +85,41 @@ async function NLAnalysis(text){
 	//console.log(result["firstword"]);
   return completion.data.choices[0].message.content;
 }
+
+exports.sendPushNotification = functions.firestore
+  .document('reminders/{documentId}')
+  .onCreate(async (snap, context) => {
+    const reminderData = snap.data();
+
+    try {
+      sendDailyPushNotification = functions.pubsub
+      .schedule('every day 08:00')
+      .timeZone('Asia/Tokyo')
+      .onRun(async (context) => {
+        try {
+          const fcmToken = reminderData.fcm_token
+          // 通知を送信する処理
+          const payload = {
+            notification: {
+              title: 'リマインダー',
+              body: '毎朝8時のリマインダーです。',
+            },
+          };
+
+          // FCMトークンを使って全てのユーザーに通知を送信
+          const response = await admin.messaging().sendToDevice(fcmToken, payload);
+    
+          console.log('通知が送信されました。', response);
+          return null;
+        } catch (error) {
+          console.error('通知の送信中にエラーが発生しました。', error);
+          return null;
+        }
+      });
+      console.log('通知が送信されました。', response);
+      return null;
+    } catch (error) {
+      console.error('通知の送信中にエラーが発生しました。', error);
+      return null;
+    }
+  });
