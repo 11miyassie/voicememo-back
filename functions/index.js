@@ -11,13 +11,6 @@ dotenv.config();
 
 admin.initializeApp();
 
-fcm_token
-"1jtMnNR4bA5lxzNl5pVD"
-(string)
-text
-"この薬をこれから3週間毎日朝の8:00に飲んでください"
-timestamp
-August 6, 2023 at 1:56:56 PM UTC+9
 
 // exports.testFunction = functions.firestore.document('/user-inputs/{documentId}')
 //   .onCreate(async (snap, context) => {
